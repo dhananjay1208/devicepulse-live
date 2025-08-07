@@ -82,7 +82,7 @@ const DeviceDashboard = () => {
     });
 
     const deviceArray = Array.from(uniqueDevices.values());
-    const onlineDevices = deviceArray.filter(d => d.device_state.toLowerCase().includes('online') || d.device_state === '1');
+    const onlineDevices = deviceArray.filter(d => d.device_state.toUpperCase() === 'ON');
     const totalDevices = deviceArray.length;
     
     // Calculate average battery percentage
@@ -114,11 +114,11 @@ const DeviceDashboard = () => {
   const stats = getDeviceStats();
 
   const getStatusBadge = (deviceState: string) => {
-    const state = deviceState.toLowerCase();
-    if (state.includes('online') || state === '1') {
-      return <Badge className="bg-success text-success-foreground">Online</Badge>;
+    const state = deviceState.toUpperCase();
+    if (state === 'ON') {
+      return <Badge className="bg-success text-success-foreground">ON</Badge>;
     }
-    return <Badge variant="secondary">Offline</Badge>;
+    return <Badge variant="secondary">OFF</Badge>;
   };
 
   const getBatteryColor = (batStat: string) => {
