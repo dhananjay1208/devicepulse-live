@@ -249,7 +249,7 @@ const DeviceDashboard = () => {
         </div>
 
         {/* Device Data Tables */}
-        <Tabs defaultValue="messages" className="w-full">
+        <Tabs defaultValue="readings" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="messages">Device Messages</TabsTrigger>
             <TabsTrigger value="readings">Device Readings</TabsTrigger>
