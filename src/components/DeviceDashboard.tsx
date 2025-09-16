@@ -250,9 +250,10 @@ const DeviceDashboard = () => {
 
         {/* Device Data Tables */}
         <Tabs defaultValue="readings" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="messages">Device Messages</TabsTrigger>
             <TabsTrigger value="readings">Device Readings</TabsTrigger>
+            <TabsTrigger value="commands">Control Commands</TabsTrigger>
           </TabsList>
           
           <TabsContent value="messages">
@@ -352,6 +353,89 @@ const DeviceDashboard = () => {
                       No device readings available
                     </div>
                   )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="commands">
+            <Card className="bg-gradient-card shadow-card border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-primary" />
+                  Device Control Commands
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {/* Device Selection */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Select Device</label>
+                    <select className="w-full p-2 border border-border rounded-md bg-background text-foreground">
+                      <option value="">Choose a device...</option>
+                      {Array.from(new Set(devices.map(d => d.gmacid))).map(macId => (
+                        <option key={macId} value={macId}>{macId}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Command Buttons */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <button className="p-3 bg-success text-success-foreground rounded-md hover:bg-success/90 transition-colors">
+                      Turn ON
+                    </button>
+                    <button className="p-3 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors">
+                      Turn OFF
+                    </button>
+                    <button className="p-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
+                      Restart
+                    </button>
+                    <button className="p-3 bg-warning text-warning-foreground rounded-md hover:bg-warning/90 transition-colors">
+                      Status Check
+                    </button>
+                  </div>
+
+                  {/* Custom Command */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Custom Command</label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        placeholder="Enter custom command..."
+                        className="flex-1 p-2 border border-border rounded-md bg-background text-foreground"
+                      />
+                      <button className="px-4 py-2 bg-accent text-accent-foreground rounded-md hover:bg-accent/90 transition-colors">
+                        Send
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Command History */}
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium">Recent Commands</h3>
+                    <div className="border border-border rounded-md p-4 bg-muted/20 max-h-48 overflow-y-auto">
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between items-center p-2 bg-background rounded border">
+                          <span className="font-mono text-primary">AA:BB:CC:DD:EE:FF</span>
+                          <span>Turn ON</span>
+                          <span className="text-success">Success</span>
+                          <span className="text-muted-foreground text-xs">2 min ago</span>
+                        </div>
+                        <div className="flex justify-between items-center p-2 bg-background rounded border">
+                          <span className="font-mono text-primary">11:22:33:44:55:66</span>
+                          <span>Status Check</span>
+                          <span className="text-warning">Pending</span>
+                          <span className="text-muted-foreground text-xs">5 min ago</span>
+                        </div>
+                        <div className="flex justify-between items-center p-2 bg-background rounded border">
+                          <span className="font-mono text-primary">FF:EE:DD:CC:BB:AA</span>
+                          <span>Turn OFF</span>
+                          <span className="text-destructive">Failed</span>
+                          <span className="text-muted-foreground text-xs">10 min ago</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
