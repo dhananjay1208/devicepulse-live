@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity, Zap, Wifi, WifiOff } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Activity, Zap, Wifi, WifiOff, Database } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface DeviceMessage {
@@ -15,8 +16,21 @@ interface DeviceMessage {
   ts: string;
 }
 
+interface DeviceData {
+  id: number;
+  device_id: string;
+  timestamp: number;
+  p1: number;
+  p2: number;
+  p3: number;
+  p4: number;
+  p5: number;
+  created_at: string;
+}
+
 const DeviceDashboard = () => {
   const [devices, setDevices] = useState<DeviceMessage[]>([]);
+  const [deviceData, setDeviceData] = useState<DeviceData[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -41,10 +55,31 @@ const DeviceDashboard = () => {
     }
   };
 
+  const fetchDeviceData = async () => {
+    try {
+      // Using any to bypass type checking since device_data table exists but isn't in types
+      const { data, error } = await (supabase as any)
+        .from('device_data')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      setDeviceData(data || []);
+    } catch (error) {
+      toast({
+        title: "Error fetching device readings",
+        description: "Failed to load device readings",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     fetchDevices();
+    fetchDeviceData();
 
-    // Set up real-time subscription
+    // Set up real-time subscription for device_messages
     const channel = supabase
       .channel('device-updates')
       .on(
@@ -213,54 +248,115 @@ const DeviceDashboard = () => {
           </Card>
         </div>
 
-        {/* Device Data Table */}
-        <Card className="bg-gradient-card shadow-card border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary" />
-              Latest Device Messages
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Timestamp</th>
-                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Serial Number</th>
-                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">MAC ID</th>
-                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Status</th>
-                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Battery</th>
-                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Device Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {devices.map((device) => (
-                    <tr key={device.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                      <td className="p-3 text-sm">
-                        {new Date(device.received_at).toLocaleString()}
-                      </td>
-                      <td className="p-3 text-sm font-mono">{device.gsrno}</td>
-                      <td className="p-3 text-sm font-mono text-primary">{device.gmacid}</td>
-                      <td className="p-3 text-sm">
-                        {getStatusBadge(device.device_state)}
-                      </td>
-                      <td className={`p-3 text-sm font-medium ${getBatteryColor(device.bat_stat)}`}>
-                        {device.bat_stat}
-                      </td>
-                      <td className="p-3 text-sm text-muted-foreground">{device.ts}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {devices.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
-                  No device data available
+        {/* Device Data Tables */}
+        <Tabs defaultValue="messages" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="messages">Device Messages</TabsTrigger>
+            <TabsTrigger value="readings">Device Readings</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="messages">
+            <Card className="bg-gradient-card shadow-card border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-primary" />
+                  Latest Device Messages
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left p-3 text-sm font-medium text-muted-foreground">Timestamp</th>
+                        <th className="text-left p-3 text-sm font-medium text-muted-foreground">Serial Number</th>
+                        <th className="text-left p-3 text-sm font-medium text-muted-foreground">MAC ID</th>
+                        <th className="text-left p-3 text-sm font-medium text-muted-foreground">Status</th>
+                        <th className="text-left p-3 text-sm font-medium text-muted-foreground">Battery</th>
+                        <th className="text-left p-3 text-sm font-medium text-muted-foreground">Device Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {devices.map((device) => (
+                        <tr key={device.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                          <td className="p-3 text-sm">
+                            {new Date(device.received_at).toLocaleString()}
+                          </td>
+                          <td className="p-3 text-sm font-mono">{device.gsrno}</td>
+                          <td className="p-3 text-sm font-mono text-primary">{device.gmacid}</td>
+                          <td className="p-3 text-sm">
+                            {getStatusBadge(device.device_state)}
+                          </td>
+                          <td className={`p-3 text-sm font-medium ${getBatteryColor(device.bat_stat)}`}>
+                            {device.bat_stat}
+                          </td>
+                          <td className="p-3 text-sm text-muted-foreground">{device.ts}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {devices.length === 0 && (
+                    <div className="text-center py-12 text-muted-foreground">
+                      No device data available
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="readings">
+            <Card className="bg-gradient-card shadow-card border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Database className="h-5 w-5 text-primary" />
+                  Latest Device Readings (Last 5 Records)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left p-3 text-sm font-medium text-muted-foreground">Device ID</th>
+                        <th className="text-left p-3 text-sm font-medium text-muted-foreground">Timestamp</th>
+                        <th className="text-left p-3 text-sm font-medium text-muted-foreground">P1</th>
+                        <th className="text-left p-3 text-sm font-medium text-muted-foreground">P2</th>
+                        <th className="text-left p-3 text-sm font-medium text-muted-foreground">P3</th>
+                        <th className="text-left p-3 text-sm font-medium text-muted-foreground">P4</th>
+                        <th className="text-left p-3 text-sm font-medium text-muted-foreground">P5</th>
+                        <th className="text-left p-3 text-sm font-medium text-muted-foreground">Created</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {deviceData.map((data) => (
+                        <tr key={data.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                          <td className="p-3 text-sm font-mono text-primary">{data.device_id}</td>
+                          <td className="p-3 text-sm">
+                            {new Date(data.timestamp * 1000).toLocaleString()}
+                          </td>
+                          <td className="p-3 text-sm font-medium">{data.p1}</td>
+                          <td className="p-3 text-sm font-medium">{data.p2}</td>
+                          <td className="p-3 text-sm font-medium">{data.p3}</td>
+                          <td className="p-3 text-sm font-medium">{data.p4}</td>
+                          <td className="p-3 text-sm font-medium">{data.p5}</td>
+                          <td className="p-3 text-sm text-muted-foreground">
+                            {new Date(data.created_at).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {deviceData.length === 0 && (
+                    <div className="text-center py-12 text-muted-foreground">
+                      No device readings available
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
